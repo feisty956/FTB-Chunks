@@ -994,71 +994,52 @@ public enum FTBChunksClient {
 	}
 
 	private void mapIcons(MapIconEvent event) {
-		Minecraft mc = Minecraft.getInstance();
+    Minecraft mc = Minecraft.getInstance();
 
-		if (mc.level == null || mc.player == null) return;
+    if (mc.level == null || mc.player == null) return;
 
-		if (FTBChunksClientConfig.MINIMAP_WAYPOINTS.get()) {
-			MapDimension.getCurrent().ifPresent(mapDimension -> {
-				for (Waypoint w : mapDimension.getWaypointManager()) {
-					if (!w.isHidden() || !event.getMapType().isMinimap()) {
-						event.add(w.getMapIcon());
-					}
-				}
-			});
-		}
+    if (FTBChunksClientConfig.MINIMAP_WAYPOINTS.get()) {
+        MapDimension.getCurrent().ifPresent(mapDimension -> {
+            for (Waypoint w : mapDimension.getWaypointManager()) {
+                if (!w.isHidden() || !event.getMapType().isMinimap()) {
+                    event.add(w.getMapIcon());
+                }
+            }
+        });
+    }
 
-		if (FTBChunksClientConfig.MINIMAP_ENTITIES.get()) {
-			for (Entity entity : mc.level.entitiesForRendering()) {
-				if (entity instanceof AbstractClientPlayer || entity.getType().getCategory() == MobCategory.MISC || entity.isInvisibleTo(mc.player)) {
-					continue;
-				}
+    if (FTBChunksClientConfig.MINIMAP_ENTITIES.get()) {
+        for (Entity entity : mc.level.entitiesForRendering()) {
+            if (entity instanceof AbstractClientPlayer || entity.getType().getCategory() == MobCategory.MISC || entity.isInvisibleTo(mc.player)) {
+                continue;
+            }
 
-				Icon icon = EntityIcons.get(entity);
+            Icon icon = EntityIcons.get(entity);
 
-				if (!icon.isEmpty()) {
-					if (FTBChunksClientConfig.ONLY_SURFACE_ENTITIES.get() && !mc.level.dimensionType().hasCeiling()) {
-						MapDimension.getCurrent().ifPresent(mapDimension -> {
-							int x = Mth.floor(entity.getX());
-							int z = Mth.floor(entity.getZ());
-							MapRegion region = mapDimension.getRegion(XZ.regionFromBlock(x, z));
-							MapRegionData data = region.getData();
-							if (data != null) {
-								int y = data.height[(x & 511) + (z & 511) * 512];
-								if (entity.getY() >= y - 10) {
-									event.add(new EntityMapIcon(entity, icon));
-								}
-							}
-						});
-					} else {
-						event.add(new EntityMapIcon(entity, icon));
-					}
-				}
-			}
-		}
+            if (!icon.isEmpty()) {
+                if (FTBChunksClientConfig.ONLY_SURFACE_ENTITIES.get() && !mc.level.dimensionType().hasCeiling()) {
+                    MapDimension.getCurrent().ifPresent(mapDimension -> {
+                        int x = Mth.floor(entity.getX());
+                        int z = Mth.floor(entity.getZ());
+                        MapRegion region = mapDimension.getRegion(XZ.regionFromBlock(x, z));
+                        MapRegionData data = region.getData();
+                        if (data != null) {
+                            int y = data.height[(x & 511) + (z & 511) * 512];
+                            if (entity.getY() >= y - 10) {
+                                event.add(new EntityMapIcon(entity, icon));
+                            }
+                        }
+                    });
+                } else {
+                    event.add(new EntityMapIcon(entity, icon));
+                }
+            }
+        }
+    }
 
-		if (FTBChunksClientConfig.MINIMAP_PLAYER_HEADS.get()) {
-			if (mc.level.players().size() > 1) {
-				for (AbstractClientPlayer player : mc.level.players()) {
-					if (player == mc.player || player.isInvisibleTo(mc.player) || !VisibleClientPlayers.isPlayerVisible(player)) {
-						continue;
-					}
-
-					// this player is tracked by vanilla, so we don't need to track it on long-range tracking
-					if (longRangePlayerTracker.remove(player.getUUID()) != null) {
-						LargeMapScreen.refreshIconsIfOpen();
-					}
-
-					event.add(new EntityMapIcon(player, FaceIcon.getFace(player.getGameProfile())));
-				}
-			}
-			longRangePlayerTracker.forEach((id, icon) -> event.add(icon));
-		}
-
-		if (!event.getMapType().isMinimap()) {
-			event.add(new EntityMapIcon(mc.player, FaceIcon.getFace(mc.player.getGameProfile())));
-		}
-	}
+    // Entfernen Sie die gesamte Logik, die Spieler-Icons zur Karte hinzufügt
+    // Das beinhaltet sowohl die Überprüfung von MINIMAP_PLAYER_HEADS als auch das Hinzufügen der eigenen Spieler-Icon
+}
 
 	void refreshMinimapIcons() {
 		lastMapIconUpdate = 0L;
